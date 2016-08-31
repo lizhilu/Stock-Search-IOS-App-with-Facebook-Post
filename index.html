@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script>
+    /*draw the iterative chart*/
+        /**
+        historical chart
+        */
+        var Markit = {};
+        Markit.InteractiveChartApi = function(symbol){
+            this.symbol = symbol;
+        };
+        Markit.InteractiveChartApi.prototype._fixDate = function(dateIn) {
+            var dat = new Date(dateIn);
+            return Date.UTC(dat.getFullYear(), dat.getMonth(), dat.getDate());
+        };
+        Markit.InteractiveChartApi.prototype._getOHLC = function(json) {
+            var dates = json.Dates || [];
+            var elements = json.Elements || [];
+            var chartSeries = [];
+
+            if (elements[0]){
+
+                for (var i = 0, datLen = dates.length; i < datLen; i++) {
+                    var dat = this._fixDate( dates[i] );
+                    var pointData = [
+                        dat,
+                        elements[0].DataSeries['open'].values[i],
+                        elements[0].DataSeries['high'].values[i],
+                        elements[0].DataSeries['low'].values[i],
+                        elements[0].DataSeries['close'].values[i]
+                    ];
+                    chartSeries.push( pointData );
+                };
+            }
+            return chartSeries;
+        };
+        Markit.InteractiveChartApi.prototype.render = function(data) {
+          var ohlc = this._getOHLC(data);
+
+
+          //console.log(ohlc);
+          $('#historycharts').highcharts('StockChart', {
+              rangeSelector: {
+                  allButtonsEnabled:true,
+                  buttons: [{
+                          type: 'week',
+                          count: 1,
+                          text: '1w'
+                        },{
+                          type: 'month',
+                          count: 1,
+                          text: '1m'
+                        },{
+                          type: 'month',
+                          count: 3,
+                          text: '3m'
+                        },{
+                          type: 'month',
+                          count: 6,
+                          text: '6m'
+                        },{
+                          type: 'year to date',
+                          count: 1,
+                          text: 'YTD'
+                        },{
+                          type: 'year',
+                          count: 1,
+                          text: '1y'
+                        },{
+                          type: 'all',
+                          text: 'All'
+                        }],
+                  inputEnabled:false,
+                  selected: 0
+              },
+
+              title: {
+                  text: this.symbol + ' Stock Value'
+              },
+
+              yAxis: [{
+                  title: {
+                      text: 'Stock Value'
+                  },
+                  height: 200,
+                  lineWidth: 2
+              }],
+
+              tooltip: {
+                    valuePrefix: '$'
+              },
+
+              series: [{
+                  type: 'area',
+                  name: this.symbol,
+                  data: ohlc,
+                  //threshold : null,
+                      tooltip : {
+                          valueDecimals : 2
+                      },
+                      fillColor : {
+                          linearGradient : {
+                              x1: 0,
+                              y1: 0,
+                              x2: 0,
+                              y2: 1
+                          },
+                          stops : [
+                              [0, Highcharts.getOptions().colors[0]],
+                              [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                          ]
+                      }
+                  }]
+              });
+            }
+
+
+
+        $(function(){
+          $(window).load(function(){
+            var flag=window.location.hash;
+            //alert(flag);
+            var company=flag.substring(1);
+            //alert(company);
+            $(function(){
+              $.ajax({
+                type: 'GET',
+                url: 'http://ajaxjsonandresponsi-env.us-west-1.elasticbeanstalk.com/',
+                data: {company2:company},
+                dataType: 'json',
+                success: function(data){
+                    var s2=data;
+                    //console.log(s2);
+                    if(s2["Positions"]==null){
+                      $('#historycharts').html("");
+                      $('#historycharts').html('No Historical Chart');
+                    }else{
+                    var a = new Markit.InteractiveChartApi(company);
+                    a.render(s2);
+
+                    var b=document.getElementById("historycharts").textContent;
+                    if(b.indexOf("No Historical Chart")!=-1){
+                      $("#highcharts-0").remove();
+                    }else{
+                      $(document).ready(function ($) {
+                        setTimeout(function(){
+                        $("#historycharts").highcharts().reflow();},10);
+                        });
+                    }
+
+                  }
+                }
+              });
+            });
+
+            //$("#1").html(company);
+          });
+        });
+        //alert("aaa");
+    </script>
+  </head>
+  <body>
+    <div id="historycharts"></div>
+  </body>
+</html>

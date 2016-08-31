@@ -1,0 +1,13 @@
+PODS:
+  - Alamofire (3.3.1)
+  - CCAutocomplete (0.0.4)
+
+DEPENDENCIES:
+  - Alamofire
+  - CCAutocomplete
+
+SPEC CHECKSUMS:
+  Alamofire: 369bc67b6f5ac33ded3648d7bd21c5bfb91c2ecc
+  CCAutocomplete: 7e54cab43d10eb9e5385d5b3409e9dee0b7af714
+
+COCOAPODS: 0.39.0
